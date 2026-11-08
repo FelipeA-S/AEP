@@ -20,6 +20,9 @@ public class Residuo {
     }
 
     //getters
+    public Long getIdResiduo() {
+        return idResiduo;
+    }
     public String getTipoResiduo() {
         return tipoResiduo;
     }
@@ -31,6 +34,9 @@ public class Residuo {
     }
 
     //setters
+    public void setIdResiduo(Long idResiduo) {
+        this.idResiduo = idResiduo;
+    }
     public void setTipoResiduo(String tipoResiduo) {
         this.tipoResiduo = tipoResiduo;
     }

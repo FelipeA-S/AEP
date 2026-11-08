@@ -20,4 +20,19 @@ public class ResiduoService {
         residuos.add(residuo);
         return residuo;
     }
+
+    public boolean atualizarResiduo(Long id, Residuo residuoAtualizado) {
+        for (int i = 0; i < residuos.size(); i++) {
+            if (residuos.get(i).getIdResiduo().equals(id)) {
+                residuoAtualizado.setIdResiduo(id);
+                residuos.set(i, residuoAtualizado);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean excluirResiduo(Long id) {
+        return residuos.removeIf(residuo -> residuo.getIdResiduo().equals(id));
+    }
 }

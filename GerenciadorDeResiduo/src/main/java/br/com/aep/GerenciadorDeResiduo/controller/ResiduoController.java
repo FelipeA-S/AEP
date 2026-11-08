@@ -2,6 +2,7 @@ package br.com.aep.GerenciadorDeResiduo.controller;
 
 import br.com.aep.GerenciadorDeResiduo.model.Residuo;
 import br.com.aep.GerenciadorDeResiduo.service.ResiduoService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -28,5 +29,25 @@ public class ResiduoController {
     @PostMapping
     public Residuo cadastrarResiduo(@RequestBody Residuo residuo) {
         return residuoService.cadastrarResiduo(residuo);
+    }
+
+    //indica que está função está responsavel por permitir editar os dados
+    @PutMapping("/{id}")
+    public ResponseEntity<Residuo> atualizarResiduo(@PathVariable Long id, @RequestBody Residuo residuo) {
+        boolean atualizado = residuoService.atualizarResiduo(id, residuo);
+        if (!atualizado) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(residuo);
+    }
+
+    //indica que está função está responsavel pela deleção dos dados
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluirResiduo(@PathVariable Long id) {
+        boolean excluido = residuoService.excluirResiduo(id);
+        if (!excluido) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.noContent().build();
     }
 }
