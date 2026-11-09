@@ -12,7 +12,7 @@ import java.util.List;
 public class ResiduoService {
 
     private final List<Residuo> residuos = new ArrayList<>();
-    private Long proximoId = 1l;
+    private Long proximoId = 1L;
 
     public List<Residuo> listarResiduos() {
         return residuos;
@@ -20,7 +20,7 @@ public class ResiduoService {
 
     public Residuo cadastrarResiduo(ResiduoRequestDTO dto) {
         Residuo residuo = new Residuo(
-                proximoId, dto.getNomeResiduo(), dto.getPesoResiduo(), dto.getDescricaoResiduo());
+                proximoId, dto.getTipoResiduo(), dto.getPesoResiduo(), dto.getDescricaoResiduo());
 
         residuos.add(residuo);
         proximoId++;
@@ -31,7 +31,7 @@ public class ResiduoService {
         for (int i = 0; i < residuos.size(); i++) {
             if (residuos.get(i).getIdResiduo().equals(id)) {
                 Residuo atualizado = new Residuo(
-                        id, dto.getNomeResiduo(), dto.getPesoResiduo(), dto.getDescricaoResiduo());
+                        id, dto.getTipoResiduo(), dto.getPesoResiduo(), dto.getDescricaoResiduo());
                 residuos.set(i, atualizado);
                 return true;
             }

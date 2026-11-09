@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 public class ResiduoRequestDTO {
 
     @NotBlank(message = "O nome do residuo é obrigatório")
-    private String nomeResiduo;
+    private String tipoResiduo;
     @NotNull(message = "A quantidade é obrigatória")
     @DecimalMin(value = "0.0",inclusive = false, message = "O peso tem que ser maior que zero")
     private BigDecimal pesoResiduo;
@@ -17,11 +17,11 @@ public class ResiduoRequestDTO {
 
     public ResiduoRequestDTO() {}
 
-    public String getNomeResiduo() {
-        return nomeResiduo;
+    public String getTipoResiduo() {
+        return tipoResiduo;
     }
-    public void setNomeResiduo(String nomeResiduo) {
-        this.nomeResiduo = nomeResiduo;
+    public void setTipoResiduo(String tipoResiduo) {
+        this.tipoResiduo = tipoResiduo;
     }
 
     public BigDecimal getPesoResiduo() {

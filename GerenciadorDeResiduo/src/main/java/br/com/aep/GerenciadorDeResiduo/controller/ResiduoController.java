@@ -4,6 +4,7 @@ import br.com.aep.GerenciadorDeResiduo.dto.ResiduoRequestDTO;
 import br.com.aep.GerenciadorDeResiduo.dto.ResiduoResponseDTO;
 import br.com.aep.GerenciadorDeResiduo.model.Residuo;
 import br.com.aep.GerenciadorDeResiduo.service.ResiduoService;
+
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
