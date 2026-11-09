@@ -1,5 +1,6 @@
 package br.com.aep.GerenciadorDeResiduo.service;
 
+import br.com.aep.GerenciadorDeResiduo.dto.ResiduoRequestDTO;
 import br.com.aep.GerenciadorDeResiduo.model.Residuo;
 import org.springframework.stereotype.Service;
 
@@ -11,21 +12,27 @@ import java.util.List;
 public class ResiduoService {
 
     private final List<Residuo> residuos = new ArrayList<>();
+    private Long proximoId = 1l;
 
     public List<Residuo> listarResiduos() {
         return residuos;
     }
 
-    public Residuo cadastrarResiduo(Residuo residuo) {
+    public Residuo cadastrarResiduo(ResiduoRequestDTO dto) {
+        Residuo residuo = new Residuo(
+                proximoId, dto.getNomeResiduo(), dto.getPesoResiduo(), dto.getDescricaoResiduo());
+
         residuos.add(residuo);
+        proximoId++;
         return residuo;
     }
 
-    public boolean atualizarResiduo(Long id, Residuo residuoAtualizado) {
+    public boolean atualizarResiduo(Long id, ResiduoRequestDTO dto) {
         for (int i = 0; i < residuos.size(); i++) {
             if (residuos.get(i).getIdResiduo().equals(id)) {
-                residuoAtualizado.setIdResiduo(id);
-                residuos.set(i, residuoAtualizado);
+                Residuo atualizado = new Residuo(
+                        id, dto.getNomeResiduo(), dto.getPesoResiduo(), dto.getDescricaoResiduo());
+                residuos.set(i, atualizado);
                 return true;
             }
         }
@@ -34,5 +41,10 @@ public class ResiduoService {
 
     public boolean excluirResiduo(Long id) {
         return residuos.removeIf(residuo -> residuo.getIdResiduo().equals(id));
+    }
+
+    public Residuo buscarPorId(Long id) {
+        return residuos.stream().filter(residuo -> residuo.getIdResiduo()
+                .equals(id)).findFirst().orElse(null);
     }
 }

@@ -13,7 +13,7 @@ public class Residuo {
     //contrutores
     public Residuo() {}
     public Residuo(Long idResiduo, String tipoResiduo, BigDecimal pesoResiduo, String descricaoResiduo) {
-        this.idResiduo = 1L;
+        this.idResiduo = idResiduo;
         this.tipoResiduo = tipoResiduo;
         this.pesoResiduo = pesoResiduo;
         this.descricaoResiduo = descricaoResiduo;
