@@ -47,4 +47,19 @@ public class EstoqueService {
                 estoque.getQuantidadeTotal().add(quantidade)
         );
     }
+
+    public void atualizarQuantidade(TipoResiduo tipo, BigDecimal novaQuantidade) {
+        Estoque estoque = buscarPorTipo(tipo);
+        if (estoque == null) {
+            throw new IllegalArgumentException(
+                    "Estoque não encontrado para o tipo: " + tipo
+            );
+        }
+        if (novaQuantidade.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(
+                    "O estoque não pode ficar negativo."
+            );
+        }
+        estoque.setQuantidadeTotal(novaQuantidade);
+    }
 }
