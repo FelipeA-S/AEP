@@ -39,7 +39,8 @@ public class MenuPrincipal implements CommandLineRunner {
             System.out.println("2 - Consultar remessas");
             System.out.println("3 - Consultar estoque");
             System.out.println("4 - Editar remessa");
-            System.out.println("5 - Sair");
+            System.out.println("5 - Excluir remessa");
+            System.out.println("6 - Sair");
             System.out.println("==================================");
             System.out.print("Escolha uma opção: ");
             while (!scanner.hasNextInt()) {
@@ -64,12 +65,18 @@ public class MenuPrincipal implements CommandLineRunner {
                     editarRemessa();
                     break;
                 case 5:
+                    excluirRemessa();
+                    break;
+                case 6:
+                    remessaService.gerarRelatorio();
+                    break;
+                case 7:
                     System.out.println("\nEncerrando o sistema...");
                     break;
                 default:
                     System.out.println("\nOpção inválida! Tente novamente.");
             }
-        } while (opcao != 5);
+        } while (opcao != 7);
     }
 
     private void consultarEstoque() {
@@ -200,6 +207,33 @@ public class MenuPrincipal implements CommandLineRunner {
         try {
             remessaService.editarRemessa(idRemessa, novosItens);
             System.out.println("\nRemessa atualizada com sucesso!");
+        } catch (IllegalArgumentException e) {
+            System.out.println("\nErro: " + e.getMessage());
+        }
+    }
+
+    private void excluirRemessa() {
+        System.out.println("\n========== EXCLUIR REMESSA ==========");
+        consultarRemessas();
+        System.out.print("\nInforme o ID da remessa: ");
+        Long idRemessa;
+        try {
+            idRemessa = Long.parseLong(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("ID inválido.");
+            return;
+        }
+        System.out.print(
+                "Tem certeza que deseja excluir esta remessa? (S/N): "
+        );
+        String resposta = scanner.nextLine();
+        if (!resposta.equalsIgnoreCase("S")) {
+            System.out.println("Exclusão cancelada.");
+            return;
+        }
+        try {
+            remessaService.excluirRemessa(idRemessa);
+            System.out.println("\nRemessa excluída com sucesso!");
         } catch (IllegalArgumentException e) {
             System.out.println("\nErro: " + e.getMessage());
         }

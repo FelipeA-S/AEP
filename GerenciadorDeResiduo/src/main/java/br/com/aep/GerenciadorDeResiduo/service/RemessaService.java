@@ -91,9 +91,7 @@ public class RemessaService {
         return remessa;
     }
 
-    public Remessa editarRemessa(
-            Long idRemessa,
-            List<ItemRemessa> novosItens) {
+    public Remessa editarRemessa(Long idRemessa, List<ItemRemessa> novosItens) {
         Remessa remessa = buscarPorId(idRemessa);
         if (remessa == null) {
             throw new IllegalArgumentException(
@@ -187,6 +185,77 @@ public class RemessaService {
         remessa.setItens(itensAtualizados);
         proximoIdItem += itensAtualizados.size();
         return remessa;
+    }
+
+    public void excluirRemessa(Long idRemessa) {
+        Remessa remessa = buscarPorId(idRemessa);
+        if (remessa == null) {
+            throw new IllegalArgumentException(
+                    "Remessa não encontrada."
+            );
+        }
+        Map<TipoResiduo, BigDecimal> novosSaldos = new HashMap<>();
+        for (ItemRemessa item : remessa.getItens()) {
+            TipoResiduo tipo = item.getResiduo().getTipoResiduo();
+            Estoque estoque = estoqueService.buscarPorTipo(tipo);
+            if (estoque == null) {
+                throw new IllegalArgumentException(
+                        "Estoque não encontrado para: " + tipo.getDescricao()
+                );
+            }
+            BigDecimal saldoFinal = estoque.getQuantidadeTotal()
+                    .subtract(item.getQuantidade());
+            if (saldoFinal.compareTo(BigDecimal.ZERO) < 0) {
+                throw new IllegalArgumentException(
+                        "Não é possível excluir: o estoque de "
+                                + tipo.getDescricao()
+                                + " ficaria negativo."
+                );
+            }
+            novosSaldos.put(tipo, saldoFinal);
+        }
+        for (Map.Entry<TipoResiduo, BigDecimal> saldo
+                : novosSaldos.entrySet()) {
+            estoqueService.atualizarQuantidade(
+                    saldo.getKey(),
+                    saldo.getValue()
+            );
+        }
+        remessas.remove(remessa);
+    }
+
+    public void gerarRelatorio() {
+        System.out.println("\n========================================");
+        System.out.println("       RELATÓRIO GERAL DO ATERRO");
+        System.out.println("========================================");
+        System.out.println(
+                "Total de remessas cadastradas: " + remessas.size()
+        );
+        BigDecimal pesoTotal = BigDecimal.ZERO;
+        for (Estoque estoque : estoqueService.listarEstoques()) {
+            pesoTotal = pesoTotal.add(
+                    estoque.getQuantidadeTotal()
+            );
+        }
+        System.out.println(
+                "Peso total armazenado: " + pesoTotal + " kg"
+        );
+        System.out.println("\n========== ESTOQUE POR CATEGORIA ==========");
+        for (Estoque estoque : estoqueService.listarEstoques()) {
+            BigDecimal quantidade = estoque.getQuantidadeTotal();
+            BigDecimal percentual = BigDecimal.ZERO;
+            if (pesoTotal.compareTo(BigDecimal.ZERO) > 0) {
+                percentual = quantidade
+                        .multiply(new BigDecimal("100"))
+                        .divide(pesoTotal, 2, java.math.RoundingMode.HALF_UP);
+            }
+            System.out.println(
+                    estoque.getTipoResiduo().getDescricao() +
+                            ": " + quantidade +
+                            " kg (" + percentual + "%)"
+            );
+        }
+        System.out.println("\n========================================");
     }
 
     public List<Remessa> listarRemessas() {
