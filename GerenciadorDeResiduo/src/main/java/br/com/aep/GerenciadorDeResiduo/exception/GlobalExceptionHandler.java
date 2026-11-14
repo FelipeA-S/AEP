@@ -18,7 +18,6 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(erro -> erro.getDefaultMessage())
                 .toList();
-
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erros);
     }
 }
