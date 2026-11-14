@@ -2,38 +2,28 @@ package br.com.aep.GerenciadorDeResiduo.service;
 
 import br.com.aep.GerenciadorDeResiduo.model.Estoque;
 import br.com.aep.GerenciadorDeResiduo.model.TipoResiduo;
+import br.com.aep.GerenciadorDeResiduo.repository.EstoqueRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class EstoqueService {
-    private final List<Estoque> estoques = new ArrayList<>();
 
-    public EstoqueService() {
-        Long proximoId = 1L;
-        for (TipoResiduo tipo : TipoResiduo.values()) {
-            Estoque estoque = new Estoque(
-                    proximoId,
-                    tipo,
-                    BigDecimal.ZERO
-            );
-            estoques.add(estoque);
-            proximoId++;
-        }
+    private final EstoqueRepository repository;
+
+    public EstoqueService(EstoqueRepository repository) {
+        this.repository = repository;
     }
 
     public List<Estoque> listarEstoques() {
-        return estoques;
+        return repository.findAll(Sort.by("idEstoque"));
     }
 
     public Estoque buscarPorTipo(TipoResiduo tipo) {
-        return estoques.stream()
-                .filter(estoque -> estoque.getTipoResiduo() == tipo)
-                .findFirst()
-                .orElse(null);
+        return repository.findByTipoResiduo(tipo).orElse(null);
     }
 
     public void adicionarQuantidade(TipoResiduo tipo, BigDecimal quantidade) {
@@ -46,6 +36,7 @@ public class EstoqueService {
         estoque.setQuantidadeTotal(
                 estoque.getQuantidadeTotal().add(quantidade)
         );
+        repository.save(estoque);
     }
 
     public void atualizarQuantidade(TipoResiduo tipo, BigDecimal novaQuantidade) {
@@ -61,5 +52,6 @@ public class EstoqueService {
             );
         }
         estoque.setQuantidadeTotal(novaQuantidade);
+        repository.save(estoque);
     }
 }

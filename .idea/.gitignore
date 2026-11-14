@@ -5,3 +5,9 @@
 /markdown.xml
 # Editor-based HTTP Client requests
 /httpRequests/
+data/
+*.mv.db
+*.trace.db
+target/
+.idea/
+*.iml

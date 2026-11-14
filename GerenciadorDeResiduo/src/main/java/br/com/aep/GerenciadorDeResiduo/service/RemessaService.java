@@ -1,29 +1,35 @@
 package br.com.aep.GerenciadorDeResiduo.service;
 
 import br.com.aep.GerenciadorDeResiduo.model.*;
+import br.com.aep.GerenciadorDeResiduo.repository.RemessaRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
-import java.math.BigDecimal;
+import java.util.Map;
 
 @Service
 public class RemessaService {
     private final ResiduoService residuoService;
     private final EstoqueService estoqueService;
-    private final List<Remessa> remessas = new ArrayList<>();
+    private final RemessaRepository repository;
 
-    private Long proximoIdRemessa = 1L;
-    private Long proximoIdItem = 1L;
-
-    public RemessaService(ResiduoService residuoService, EstoqueService estoqueService) {
+    public RemessaService(ResiduoService residuoService,
+                          EstoqueService estoqueService,
+                          RemessaRepository repository) {
         this.residuoService = residuoService;
         this.estoqueService = estoqueService;
+        this.repository = repository;
     }
 
+    // @Transactional: se qualquer erro acontecer, NADA é gravado
+    // (nem a remessa, nem a alteração do estoque)
+    @Transactional
     public Remessa cadastrarRemessa(List<ItemRemessa> itensRecebidos) {
         if (itensRecebidos == null || itensRecebidos.isEmpty()) {
             throw new IllegalArgumentException(
@@ -67,8 +73,9 @@ public class RemessaService {
                         "Estoque não encontrado para o resíduo informado."
                 );
             }
+            // id null: o banco gera o id do item
             ItemRemessa itemRegistrado = new ItemRemessa(
-                    proximoIdItem + itensRegistrados.size(),
+                    null,
                     residuo,
                     item.getQuantidade()
             );
@@ -80,18 +87,19 @@ public class RemessaService {
                     item.getQuantidade()
             );
         }
+        // id null: o banco gera o número da remessa
         Remessa remessa = new Remessa(
-                proximoIdRemessa,
+                null,
                 LocalDateTime.now(),
                 itensRegistrados
         );
-        remessas.add(remessa);
-        proximoIdRemessa++;
-        proximoIdItem += itensRegistrados.size();
-        return remessa;
+        return repository.save(remessa);
     }
 
-    public Remessa editarRemessa(Long idRemessa, List<ItemRemessa> novosItens) {
+    @Transactional
+    public Remessa editarRemessa(
+            Long idRemessa,
+            List<ItemRemessa> novosItens) {
         Remessa remessa = buscarPorId(idRemessa);
         if (remessa == null) {
             throw new IllegalArgumentException(
@@ -140,7 +148,7 @@ public class RemessaService {
                 );
             }
             ItemRemessa novoItem = new ItemRemessa(
-                    proximoIdItem + itensAtualizados.size(),
+                    null,
                     residuo,
                     item.getQuantidade()
             );
@@ -182,11 +190,13 @@ public class RemessaService {
                     saldo.getValue()
             );
         }
-        remessa.setItens(itensAtualizados);
-        proximoIdItem += itensAtualizados.size();
-        return remessa;
+        // clear + addAll (em vez de setItens) para o Hibernate apagar os itens antigos
+        remessa.getItens().clear();
+        remessa.getItens().addAll(itensAtualizados);
+        return repository.save(remessa);
     }
 
+    @Transactional
     public void excluirRemessa(Long idRemessa) {
         Remessa remessa = buscarPorId(idRemessa);
         if (remessa == null) {
@@ -194,6 +204,7 @@ public class RemessaService {
                     "Remessa não encontrada."
             );
         }
+        // 1) calcula o novo saldo de cada tipo, sem gravar nada ainda
         Map<TipoResiduo, BigDecimal> novosSaldos = new HashMap<>();
         for (ItemRemessa item : remessa.getItens()) {
             TipoResiduo tipo = item.getResiduo().getTipoResiduo();
@@ -203,25 +214,24 @@ public class RemessaService {
                         "Estoque não encontrado para: " + tipo.getDescricao()
                 );
             }
-            BigDecimal saldoFinal = estoque.getQuantidadeTotal()
-                    .subtract(item.getQuantidade());
+            BigDecimal saldoAtual = novosSaldos.getOrDefault(
+                    tipo, estoque.getQuantidadeTotal()
+            );
+            BigDecimal saldoFinal = saldoAtual.subtract(item.getQuantidade());
             if (saldoFinal.compareTo(BigDecimal.ZERO) < 0) {
                 throw new IllegalArgumentException(
-                        "Não é possível excluir: o estoque de "
+                        "A exclusão deixaria o estoque negativo para: "
                                 + tipo.getDescricao()
-                                + " ficaria negativo."
                 );
             }
             novosSaldos.put(tipo, saldoFinal);
         }
-        for (Map.Entry<TipoResiduo, BigDecimal> saldo
-                : novosSaldos.entrySet()) {
-            estoqueService.atualizarQuantidade(
-                    saldo.getKey(),
-                    saldo.getValue()
-            );
+        // 2) só depois de validar tudo, atualiza o estoque
+        for (Map.Entry<TipoResiduo, BigDecimal> saldo : novosSaldos.entrySet()) {
+            estoqueService.atualizarQuantidade(saldo.getKey(), saldo.getValue());
         }
-        remessas.remove(remessa);
+        // 3) apaga a remessa (os itens são apagados junto, por causa do cascade)
+        repository.delete(remessa);
     }
 
     public void gerarRelatorio() {
@@ -229,7 +239,7 @@ public class RemessaService {
         System.out.println("       RELATÓRIO GERAL DO ATERRO");
         System.out.println("========================================");
         System.out.println(
-                "Total de remessas cadastradas: " + remessas.size()
+                "Total de remessas cadastradas: " + repository.count()
         );
         BigDecimal pesoTotal = BigDecimal.ZERO;
         for (Estoque estoque : estoqueService.listarEstoques()) {
@@ -259,13 +269,12 @@ public class RemessaService {
     }
 
     public List<Remessa> listarRemessas() {
-        return remessas;
+        return repository.findAll(Sort.by("idRemessa"));
     }
 
     public Remessa buscarPorId(Long id) {
-        return remessas.stream()
-                .filter(remessa -> remessa.getIdRemessa().equals(id))
-                .findFirst()
-                .orElse(null);
+        return repository.findById(id).orElse(null);
     }
+
+
 }
